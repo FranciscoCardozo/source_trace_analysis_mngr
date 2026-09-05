@@ -1,10 +1,7 @@
 import fs from "fs";
 import * as tar from "tar";
 import AdmZip from "adm-zip";
-
-export interface ExtractArchiveOptions {
-    stripComponents?: number;
-}
+import { ExtractArchiveOptions } from "./models/interfaces/extractArchiveOptions.interface";
 
 export default class Utils {
     static async extractArchive(
