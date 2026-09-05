@@ -12,7 +12,8 @@
       "image": "IMAGE_PLACEHOLDER",
       "essential": true,
       "environment": [
-        { "name": "DEST_DIR", "value": "/mnt/model" }
+        { "name": "DEST_DIR", "value": "/mnt/model" },
+        { "name": "PYTHONUNBUFFERED", "value": "1" }
       ],
       "mountPoints": [
         {

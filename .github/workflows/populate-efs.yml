@@ -115,8 +115,35 @@ jobs:
           echo "task_arn=$TASK_ARN" >> "$GITHUB_OUTPUT"
 
       - name: Wait for task to finish
+        env:
+          TASK_ARN: ${{ steps.run-task.outputs.task_arn }}
         run: |
-          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "${{ steps.run-task.outputs.task_arn }}"
+          set -uo pipefail
+          # aws ecs wait tasks-stopped caps out at 10 minutes (100 attempts x 6s),
+          # which isn't enough to download a multi-GB model. Poll manually with a
+          # longer timeout, and stop-task on timeout so we never leave a task
+          # running (and billing) unattended if it hangs.
+          TIMEOUT_SECONDS=2700
+          INTERVAL_SECONDS=15
+          ELAPSED=0
+
+          while true; do
+            STATUS=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" --query "tasks[0].lastStatus" --output text)
+            echo "Task status: $STATUS (elapsed ${ELAPSED}s)"
+
+            if [ "$STATUS" = "STOPPED" ]; then
+              exit 0
+            fi
+
+            if [ "$ELAPSED" -ge "$TIMEOUT_SECONDS" ]; then
+              echo "Timed out after ${TIMEOUT_SECONDS}s waiting for the task to stop; stopping it to avoid a zombie task."
+              aws ecs stop-task --cluster "$ECS_CLUSTER" --task "$TASK_ARN" --reason "CI timeout after ${TIMEOUT_SECONDS}s" || true
+              exit 1
+            fi
+
+            sleep "$INTERVAL_SECONDS"
+            ELAPSED=$((ELAPSED + INTERVAL_SECONDS))
+          done
 
       - name: Check exit code
         run: |
