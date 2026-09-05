@@ -1,0 +1,47 @@
+{
+  "name": "source-trace-analysis-mngr",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node ./build/bin/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.751.0",
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "@aws-sdk/client-ses": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.1105.0",
+    "adm-zip": "^0.6.0",
+    "aws-serverless-express": "^3.4.0",
+    "debug": "^4.4.0",
+    "express": "^4.21.2",
+    "express-actuator": "^1.8.4",
+    "express-openapi-validate": "^0.6.1",
+    "morgan": "^1.10.0",
+    "node-fetch": "^3.3.2",
+    "tar": "^7.5.22",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/chai": "^4.3.6",
+    "@types/debug": "~4.1.4",
+    "@types/express": "^4.17.18",
+    "@types/express-actuator": "^1.8.1",
+    "@types/morgan": "^1.9.5",
+    "@types/node": "^20.7.0",
+    "@types/node-fetch": "^2.6.6",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "chai": "^4.3.8",
+    "chai-http": "^4.4.0",
+    "eslint": "^8.49.0",
+    "http-server": "^14.1.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}

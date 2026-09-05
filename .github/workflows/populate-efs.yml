@@ -1,0 +1,132 @@
+name: Populate Model EFS
+
+# Se dispara en cada push, pero el job real solo corre si:
+#   - se invoca a mano (workflow_dispatch), o
+#   - el mensaje del commit incluye la keyword [update-model].
+# Default invertido a propósito: bajar 20-38GB de HuggingFace en cada push
+# normal sería carísimo e innecesario.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      hf_model_repo:
+        description: "HuggingFace repo id (ej. bartowski/Qwen2.5-32B-Instruct-GGUF)"
+        required: false
+      hf_model_file:
+        description: "Nombre del archivo .gguf dentro del repo"
+        required: false
+      expected_sha256:
+        description: "Checksum sha256 esperado del archivo"
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  MODEL_LOADER_ECR_REPOSITORY: ${{ vars.MODEL_LOADER_ECR_REPOSITORY }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+  MODEL_LOADER_CONTAINER_NAME: ${{ vars.MODEL_LOADER_CONTAINER_NAME }}
+  MODEL_LOADER_TASK_DEFINITION_FILE: ecs/model-loader-task-definition.json
+  ECS_SUBNETS: ${{ vars.ECS_SUBNETS }}
+  ECS_SECURITY_GROUPS: ${{ vars.ECS_SECURITY_GROUPS }}
+
+jobs:
+  should-run:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event.head_commit.message }}" == *"[update-model]"* ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  populate-efs:
+    needs: should-run
+    if: needs.should-run.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push model-loader image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          docker build -t "$ECR_REGISTRY/$MODEL_LOADER_ECR_REPOSITORY:$IMAGE_TAG" ./docker/model-loader
+          docker push "$ECR_REGISTRY/$MODEL_LOADER_ECR_REPOSITORY:$IMAGE_TAG"
+          echo "image=$ECR_REGISTRY/$MODEL_LOADER_ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Render model-loader task definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.MODEL_LOADER_TASK_DEFINITION_FILE }}
+          container-name: ${{ env.MODEL_LOADER_CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Register task definition
+        id: register-task-def
+        env:
+          TASK_DEF_FILE: ${{ steps.render-task-def.outputs.task-definition }}
+        run: |
+          set -euo pipefail
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "file://$TASK_DEF_FILE" \
+            --query "taskDefinition.taskDefinitionArn" --output text)
+          echo "task_def_arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Run one-off model-loader task
+        id: run-task
+        env:
+          HF_MODEL_REPO: ${{ github.event.inputs.hf_model_repo || vars.DEFAULT_HF_MODEL_REPO }}
+          HF_MODEL_FILE: ${{ github.event.inputs.hf_model_file || vars.DEFAULT_HF_MODEL_FILE }}
+          EXPECTED_SHA256: ${{ github.event.inputs.expected_sha256 || vars.DEFAULT_MODEL_SHA256 }}
+        run: |
+          set -euo pipefail
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$ECS_CLUSTER" \
+            --task-definition "${{ steps.register-task-def.outputs.task_def_arn }}" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$ECS_SUBNETS],securityGroups=[$ECS_SECURITY_GROUPS],assignPublicIp=DISABLED}" \
+            --overrides "{\"containerOverrides\":[{\"name\":\"${MODEL_LOADER_CONTAINER_NAME}\",\"environment\":[{\"name\":\"HF_MODEL_REPO\",\"value\":\"$HF_MODEL_REPO\"},{\"name\":\"HF_MODEL_FILE\",\"value\":\"$HF_MODEL_FILE\"},{\"name\":\"EXPECTED_SHA256\",\"value\":\"$EXPECTED_SHA256\"}]}]}" \
+            --query "tasks[0].taskArn" --output text)
+          echo "task_arn=$TASK_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for task to finish
+        run: |
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "${{ steps.run-task.outputs.task_arn }}"
+
+      - name: Check exit code
+        run: |
+          set -euo pipefail
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster "$ECS_CLUSTER" \
+            --tasks "${{ steps.run-task.outputs.task_arn }}" \
+            --query "tasks[0].containers[0].exitCode" --output text)
+          echo "Model loader exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "El task de model-loader falló (ver logs en CloudWatch)."
+            exit 1
+          fi

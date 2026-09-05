@@ -1,0 +1,15 @@
+{
+  "cluster": "source_trace_analysis_mngr",
+  "serviceName": "source_trace_analysis_mngr-svc",
+  "taskDefinition": "source_trace_analysis_mngr",
+  "desiredCount": 0,
+  "launchType": "FARGATE",
+  "schedulingStrategy": "REPLICA",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+      "securityGroups": ["sg-00d4aea7aef67195e"],
+      "assignPublicIp": "DISABLED"
+    }
+  }
+}

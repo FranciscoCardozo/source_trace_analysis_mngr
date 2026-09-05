@@ -1,0 +1,48 @@
+{
+  "family": "model-loader",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::713881810585:role/source_trace_model_loader_exec_role",
+  "taskRoleArn": "arn:aws:iam::713881810585:role/source_trace_model_loader_task_role",
+  "containerDefinitions": [
+    {
+      "name": "model-loader",
+      "image": "IMAGE_PLACEHOLDER",
+      "essential": true,
+      "environment": [
+        { "name": "DEST_DIR", "value": "/mnt/model" }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "model-efs",
+          "containerPath": "/mnt/model",
+          "readOnly": false
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/model-loader",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "model-loader",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "model-efs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-07625cbf2e8c80d10",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "fsap-059833b48f611da70",
+          "iam": "ENABLED"
+        }
+      }
+    }
+  ]
+}

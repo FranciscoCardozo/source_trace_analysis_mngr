@@ -1,0 +1,68 @@
+{
+  "family": "source_trace_analysis_mngr",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "4096",
+  "memory": "30720",
+  "executionRoleArn": "arn:aws:iam::713881810585:role/source_trace_analysis_mngr_exec_role",
+  "taskRoleArn": "arn:aws:iam::713881810585:role/source_trace_analysis_mngr_task_role",
+  "containerDefinitions": [
+    {
+      "name": "analysis-mngr",
+      "image": "IMAGE_PLACEHOLDER",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 3001, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "MODEL_PATH", "value": "/mnt/model/model.gguf" },
+        { "name": "WORKDIR", "value": "/mnt/repo" }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "model-efs",
+          "containerPath": "/mnt/model",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "repo-efs",
+          "containerPath": "/mnt/repo",
+          "readOnly": false
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/analysis-mngr",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "analysis-mngr",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "model-efs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-07625cbf2e8c80d10",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "fsap-059833b48f611da70",
+          "iam": "ENABLED"
+        }
+      }
+    },
+    {
+      "name": "repo-efs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-0264af2239d549bec",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "fsap-049704f16a0c6a217",
+          "iam": "ENABLED"
+        }
+      }
+    }
+  ]
+}

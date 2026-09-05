@@ -1,0 +1,7 @@
+node_modules
+build
+.git
+.github
+tests
+*.md
+npm-debug.log
