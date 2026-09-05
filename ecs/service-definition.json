@@ -1,6 +1,6 @@
 {
   "cluster": "source_trace_analysis_mngr",
-  "serviceName": "source_trace_analysis_mngr-svc",
+  "serviceName": "source_trace_analysis_mngr",
   "taskDefinition": "source_trace_analysis_mngr",
   "desiredCount": 0,
   "launchType": "FARGATE",
