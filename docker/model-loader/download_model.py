@@ -13,6 +13,7 @@ EXPECTED_SHA256 = os.environ["EXPECTED_SHA256"]
 DEST_DIR = os.environ.get("DEST_DIR", "/mnt/model")
 HEARTBEAT_SECONDS = int(os.environ.get("HEARTBEAT_SECONDS", "30"))
 HF_TOKEN = os.environ.get("HF_TOKEN") or None
+MODEL_SYMLINK_NAME = os.environ.get("MODEL_SYMLINK_NAME", "model.gguf")
 
 
 def sha256sum(path: str) -> str:
@@ -63,6 +64,15 @@ def main() -> None:
         final_path = os.path.join(DEST_DIR, os.path.basename(FILENAME))
         shutil.move(downloaded_path, final_path)
         print(f"Model written to {final_path} (sha256={digest})", flush=True)
+
+        # Point a stable "model.gguf" symlink at whatever file was just downloaded,
+        # so the inference task definition never has to change its --model path
+        # when swapping models.
+        symlink_path = os.path.join(DEST_DIR, MODEL_SYMLINK_NAME)
+        if os.path.lexists(symlink_path):
+            os.remove(symlink_path)
+        os.symlink(os.path.basename(final_path), symlink_path)
+        print(f"Symlink updated: {symlink_path} -> {os.path.basename(final_path)}", flush=True)
 
 
 if __name__ == "__main__":
