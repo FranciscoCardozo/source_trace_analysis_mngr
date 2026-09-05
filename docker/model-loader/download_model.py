@@ -12,6 +12,7 @@ FILENAME = os.environ["HF_MODEL_FILE"]
 EXPECTED_SHA256 = os.environ["EXPECTED_SHA256"]
 DEST_DIR = os.environ.get("DEST_DIR", "/mnt/model")
 HEARTBEAT_SECONDS = int(os.environ.get("HEARTBEAT_SECONDS", "30"))
+HF_TOKEN = os.environ.get("HF_TOKEN") or None
 
 
 def sha256sum(path: str) -> str:
@@ -49,7 +50,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(dir=DEST_DIR) as tmp_dir:
         stop_heartbeat = start_heartbeat(tmp_dir)
         try:
-            downloaded_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME, local_dir=tmp_dir)
+            downloaded_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME, local_dir=tmp_dir, token=HF_TOKEN)
         finally:
             stop_heartbeat.set()
 

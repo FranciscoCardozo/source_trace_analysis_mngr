@@ -1,0 +1,20 @@
+{
+  "cluster": "source_trace_analysis_mngr",
+  "serviceName": "qwen-inference-svc",
+  "taskDefinition": "qwen-inference",
+  "desiredCount": 1,
+  "launchType": "FARGATE",
+  "schedulingStrategy": "REPLICA",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+      "securityGroups": ["sg-00d4aea7aef67195e"],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "serviceRegistries": [
+    {
+      "registryArn": "arn:aws:servicediscovery:us-east-1:713881810585:service/srv-jgauzzklybys7jwb"
+    }
+  ]
+}

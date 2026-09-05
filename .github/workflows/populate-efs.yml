@@ -103,6 +103,7 @@ jobs:
           HF_MODEL_REPO: ${{ github.event.inputs.hf_model_repo || vars.DEFAULT_HF_MODEL_REPO }}
           HF_MODEL_FILE: ${{ github.event.inputs.hf_model_file || vars.DEFAULT_HF_MODEL_FILE }}
           EXPECTED_SHA256: ${{ github.event.inputs.expected_sha256 || vars.DEFAULT_MODEL_SHA256 }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
           TASK_ARN=$(aws ecs run-task \
@@ -110,7 +111,7 @@ jobs:
             --task-definition "${{ steps.register-task-def.outputs.task_def_arn }}" \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[$ECS_SUBNETS],securityGroups=[$ECS_SECURITY_GROUPS],assignPublicIp=DISABLED}" \
-            --overrides "{\"containerOverrides\":[{\"name\":\"${MODEL_LOADER_CONTAINER_NAME}\",\"environment\":[{\"name\":\"HF_MODEL_REPO\",\"value\":\"$HF_MODEL_REPO\"},{\"name\":\"HF_MODEL_FILE\",\"value\":\"$HF_MODEL_FILE\"},{\"name\":\"EXPECTED_SHA256\",\"value\":\"$EXPECTED_SHA256\"}]}]}" \
+            --overrides "{\"containerOverrides\":[{\"name\":\"${MODEL_LOADER_CONTAINER_NAME}\",\"environment\":[{\"name\":\"HF_MODEL_REPO\",\"value\":\"$HF_MODEL_REPO\"},{\"name\":\"HF_MODEL_FILE\",\"value\":\"$HF_MODEL_FILE\"},{\"name\":\"EXPECTED_SHA256\",\"value\":\"$EXPECTED_SHA256\"},{\"name\":\"HF_TOKEN\",\"value\":\"$HF_TOKEN\"}]}]}" \
             --query "tasks[0].taskArn" --output text)
           echo "task_arn=$TASK_ARN" >> "$GITHUB_OUTPUT"
 
