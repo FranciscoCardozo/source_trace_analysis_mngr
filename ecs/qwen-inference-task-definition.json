@@ -1,33 +1,38 @@
 {
-  "family": "source_trace_analysis_mngr",
+  "family": "qwen-inference",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "2048",
+  "cpu": "4096",
+  "memory": "8192",
   "executionRoleArn": "arn:aws:iam::713881810585:role/source_trace_analysis_mngr_exec_role",
   "taskRoleArn": "arn:aws:iam::713881810585:role/source_trace_analysis_mngr_task_role",
   "containerDefinitions": [
     {
-      "name": "analysis-mngr",
-      "image": "IMAGE_PLACEHOLDER",
+      "name": "qwen-inference",
+      "image": "ghcr.io/ggml-org/llama.cpp:server",
       "essential": true,
-      "environment": [
-        { "name": "WORKDIR", "value": "/mnt/repo" },
-        { "name": "MODEL_SERVICE_URL", "value": "http://qwen-inference.source-trace.local:3001" }
+      "command": [
+        "-m", "/mnt/model/Qwen3-8B-UD-Q4_K_XL.gguf",
+        "--host", "0.0.0.0",
+        "--port", "3001",
+        "-c", "4096"
+      ],
+      "portMappings": [
+        { "containerPort": 3001, "protocol": "tcp" }
       ],
       "mountPoints": [
         {
-          "sourceVolume": "repo-efs",
-          "containerPath": "/mnt/repo",
-          "readOnly": false
+          "sourceVolume": "model-efs",
+          "containerPath": "/mnt/model",
+          "readOnly": true
         }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/analysis-mngr",
+          "awslogs-group": "/ecs/qwen-inference",
           "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "analysis-mngr",
+          "awslogs-stream-prefix": "qwen-inference",
           "awslogs-create-group": "true"
         }
       }
@@ -35,12 +40,12 @@
   ],
   "volumes": [
     {
-      "name": "repo-efs",
+      "name": "model-efs",
       "efsVolumeConfiguration": {
-        "fileSystemId": "fs-0264af2239d549bec",
+        "fileSystemId": "fs-07625cbf2e8c80d10",
         "transitEncryption": "ENABLED",
         "authorizationConfig": {
-          "accessPointId": "fsap-049704f16a0c6a217",
+          "accessPointId": "fsap-059833b48f611da70",
           "iam": "ENABLED"
         }
       }

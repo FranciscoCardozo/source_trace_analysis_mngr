@@ -20,7 +20,7 @@ interface LlamaCppCompletionResponse {
 
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TEMPERATURE = 0.2;
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 1_800_000;
 
 export default class IaPort {
     constructor() {
