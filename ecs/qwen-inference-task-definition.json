@@ -12,10 +12,11 @@
       "image": "ghcr.io/ggml-org/llama.cpp:server",
       "essential": true,
       "command": [
-        "-m", "/mnt/model/Qwen3-8B-UD-Q4_K_XL.gguf",
+        "-m", "/mnt/model/model.gguf",
         "--host", "0.0.0.0",
         "--port", "3001",
-        "-c", "4096"
+        "-c", "4096",
+        "-t", "4"
       ],
       "portMappings": [
         { "containerPort": 3001, "protocol": "tcp" }
