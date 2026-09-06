@@ -10,17 +10,19 @@ export interface PromptOptions {
     timeoutMs?: number;
 }
 
-interface LlamaCppCompletionResponse {
-    content: string;
-    stop?: boolean;
-    model?: string;
-    tokens_predicted?: number;
-    tokens_evaluated?: number;
+interface ChatCompletionResponse {
+    choices?: { message?: { content?: string } }[];
 }
 
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TEMPERATURE = 0.2;
 const DEFAULT_TIMEOUT_MS = 1_800_000;
+
+const SYSTEM_PROMPT = [
+    "You are a precise technical assistant analyzing software repositories.",
+    "Follow the user's formatting instructions exactly (JSON-only, plain text, language, length, etc.).",
+    "Output nothing besides what is explicitly requested: no preamble, no restated instructions, no extra commentary.",
+].join(" ");
 
 export default class IaPort {
     constructor() {
@@ -31,7 +33,12 @@ export default class IaPort {
             throw new Error("MODEL_SERVICE_URL is not configured");
         }
 
-        const endpoint = `${config.MODEL_SERVICE_URL.replace(/\/$/, "")}/completion`;
+        // Uses the OpenAI-compatible chat endpoint (not llama.cpp's raw /completion)
+        // so the model's own chat template is applied. Raw completion mode gives an
+        // instruction-tuned model no clear boundary between "instructions" and
+        // "response", and it can degenerate into echoing/repeating the instructions
+        // instead of answering them.
+        const endpoint = `${config.MODEL_SERVICE_URL.replace(/\/$/, "")}/v1/chat/completions`;
         log(`Sending prompt to ${endpoint} (${promptText.length} chars)`);
 
         const controller = new AbortController();
@@ -42,10 +49,14 @@ export default class IaPort {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    prompt: promptText,
-                    n_predict: options.maxTokens ?? DEFAULT_MAX_TOKENS,
+                    model: "local",
+                    messages: [
+                        { role: "system", content: SYSTEM_PROMPT },
+                        { role: "user", content: promptText },
+                    ],
+                    max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
                     temperature: options.temperature ?? DEFAULT_TEMPERATURE,
-                    stop: options.stop ?? [],
+                    stop: options.stop && options.stop.length > 0 ? options.stop : undefined,
                     stream: false,
                 }),
                 signal: controller.signal,
@@ -56,8 +67,13 @@ export default class IaPort {
                 throw new Error(`Model service responded with ${response.status} ${response.statusText}: ${errorBody}`);
             }
 
-            const data = await response.json() as LlamaCppCompletionResponse;
-            return data.content;
+            const data = await response.json() as ChatCompletionResponse;
+            const content = data.choices?.[0]?.message?.content;
+            if (typeof content !== "string") {
+                throw new Error(`Unexpected model response shape: ${JSON.stringify(data).slice(0, 300)}`);
+            }
+
+            return content;
         } finally {
             clearTimeout(timeout);
         }
