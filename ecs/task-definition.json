@@ -14,7 +14,8 @@
       "environment": [
         { "name": "WORKDIR", "value": "/mnt/repo" },
         { "name": "MODEL_SERVICE_URL", "value": "http://qwen-inference.source-trace.local:3001" },
-        { "name": "DEBUG", "value": "app:*" }
+        { "name": "DEBUG", "value": "app:*" },
+        { "name": "DYNAMODB_TABLE_NAME", "value": "source_trace_db" }
       ],
       "mountPoints": [
         {
