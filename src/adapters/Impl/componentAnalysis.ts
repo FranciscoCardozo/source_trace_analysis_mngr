@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import debug from "debug";
 import { ComponentAnalysisFactory, ControllerValidationResult, ServiceValidationResult, ModelValidationResult, FrameworkComponentValidationResult, ApiValidationResult } from "../../domain/models/factoryImpl/componentAnalysisFactory";
-import { buildFileTree } from "../../domain/sourceInspector";
+import { buildFileTree, fileTreeForPrompt } from "../../domain/sourceInspector";
 import IaPort from "../../ports/iaPort/ia.port";
 import JobMetadataRepository from "../../domain/jobMetadataRepository";
 import config from "../../config";
@@ -172,13 +172,13 @@ export class ComponentAnalysisImpl implements ComponentAnalysisFactory {
             "(e.g. Controllers in Spring/NestJS/Rails, Views in Django/Flask, Routes in Express).",
             "Project file structure (relative paths, possibly truncated):",
             "```",
-            fileTree.join("\n"),
+            fileTreeForPrompt(fileTree),
             "```",
             "Identify which file paths, if any, are likely controllers/endpoint handlers.",
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "controllers": ["path1", "path2"]}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
 
         return this.parseControllerResponse(response);
     }
@@ -205,13 +205,13 @@ export class ComponentAnalysisImpl implements ComponentAnalysisFactory {
             "regardless of the framework's specific terminology.",
             "Project file structure (relative paths, possibly truncated):",
             "```",
-            fileTree.join("\n"),
+            fileTreeForPrompt(fileTree),
             "```",
             "Identify which file paths, if any, are likely part of the service/business-logic layer.",
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "services": ["path1", "path2"]}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
 
         return this.parseServiceResponse(response);
     }
@@ -237,13 +237,13 @@ export class ComponentAnalysisImpl implements ComponentAnalysisFactory {
             "(the classes/structures representing the domain data, regardless of the framework's specific terminology).",
             "Project file structure (relative paths, possibly truncated):",
             "```",
-            fileTree.join("\n"),
+            fileTreeForPrompt(fileTree),
             "```",
             "Identify which file paths, if any, are likely data models/entities.",
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "models": ["path1", "path2"]}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
 
         return this.parseModelResponse(response);
     }
@@ -285,12 +285,12 @@ export class ComponentAnalysisImpl implements ComponentAnalysisFactory {
             "based on the file structure below.",
             "Project file structure (relative paths, possibly truncated):",
             "```",
-            fileTree.join("\n"),
+            fileTreeForPrompt(fileTree),
             "```",
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "components": ["CategoryName1", "CategoryName2"]}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
 
         return this.parseComponentsResponse(response);
     }
@@ -359,7 +359,7 @@ export class ComponentAnalysisImpl implements ComponentAnalysisFactory {
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "apis": ["API name 1", "API name 2"]}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
 
         const result = this.parseApisResponse(response);
         return { ...result, evidencePaths: Array.from(evidenceFiles) };

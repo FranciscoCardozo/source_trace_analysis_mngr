@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import debug from "debug";
 import { FunctionalResumeFactory } from "../../domain/models/factoryImpl/functionalResumeFactory";
-import { findManifest, findReadme, buildFileTree } from "../../domain/sourceInspector";
+import { findManifest, findReadme, buildFileTree, fileTreeForPrompt } from "../../domain/sourceInspector";
 import JobMetadataRepository from "../../domain/jobMetadataRepository";
 import IaPort from "../../ports/iaPort/ia.port";
 import config from "../../config";
@@ -10,8 +10,8 @@ import config from "../../config";
 const log: debug.IDebugger = debug("app:functionalResumeImpl");
 
 const MAX_FILE_TREE_ENTRIES = 300;
-const MAX_README_CHARS = 3000;
-const MAX_MANIFEST_CHARS = 2000;
+const MAX_README_CHARS = 1500;
+const MAX_MANIFEST_CHARS = 1200;
 
 export class FunctionalResumeImpl implements FunctionalResumeFactory {
     constructor() {
@@ -60,7 +60,7 @@ export class FunctionalResumeImpl implements FunctionalResumeFactory {
         promptParts.push(
             "Project file structure (relative paths, possibly truncated):",
             "```",
-            fileTree.join("\n"),
+            fileTreeForPrompt(fileTree),
             "```"
         );
 
@@ -74,7 +74,7 @@ export class FunctionalResumeImpl implements FunctionalResumeFactory {
 
         const prompt = promptParts.join("\n");
 
-        const summary = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0.3 });
+        const summary = await IaPort.prompt(prompt, { maxTokens: 180, temperature: 0.3 });
 
         return summary.trim();
     }

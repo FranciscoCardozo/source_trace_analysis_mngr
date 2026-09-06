@@ -19,6 +19,16 @@ export const MANIFEST_FILES = [
 
 const README_FILES = ["README.md", "Readme.md", "readme.md", "README.rst", "README.txt"];
 
+// Caps how much of the file tree actually gets embedded in an AI prompt.
+// buildFileTree's own maxEntries controls the heuristic scan (can stay large,
+// it's just string comparisons); this controls prompt/token cost, which is
+// what actually matters for latency on a slow inference backend.
+export const MAX_FILE_TREE_PROMPT_CHARS = 4000;
+
+export function fileTreeForPrompt(fileTree: string[]): string {
+    return fileTree.join("\n").slice(0, MAX_FILE_TREE_PROMPT_CHARS);
+}
+
 export interface ManifestFile {
     file: string;
     content: string;
