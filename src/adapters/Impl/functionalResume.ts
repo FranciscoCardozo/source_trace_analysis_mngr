@@ -4,6 +4,7 @@ import debug from "debug";
 import { FunctionalResumeFactory } from "../../domain/models/factoryImpl/functionalResumeFactory";
 import { findManifest, findReadme, buildFileTree, fileTreeForPrompt } from "../../domain/sourceInspector";
 import JobMetadataRepository from "../../domain/jobMetadataRepository";
+import ErrorHandler from "../../domain/errorHandler";
 import IaPort from "../../ports/iaPort/ia.port";
 import config from "../../config";
 
@@ -30,7 +31,7 @@ export class FunctionalResumeImpl implements FunctionalResumeFactory {
     async getFunctionalResume(jobId: string): Promise<string> {
         const sourceDir = path.join(config.WORKDIR, jobId);
         if (!fs.existsSync(sourceDir)) {
-            throw new Error(`Source directory not found: ${sourceDir}`);
+            throw ErrorHandler.sourceDirectoryNotFound(sourceDir);
         }
 
         const metadata = await JobMetadataRepository.getMetadata(jobId);

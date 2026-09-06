@@ -6,6 +6,7 @@ import { pipeline } from "stream/promises";
 import debug from "debug";
 import config from "../../config";
 import Utils from "../../domain/utils";
+import ErrorHandler from "../../domain/errorHandler";
 
 const log: debug.IDebugger = debug("app:getSourcePort");
 
@@ -38,7 +39,7 @@ export default class GetSourcePort {
             };
         }
 
-        throw new Error(`Unable to parse git repository url: ${url}`);
+        throw ErrorHandler.unableToParseGitUrl(url);
     }
 
     static async downloadRepository(url: string, destDir: string): Promise<string> {
@@ -56,7 +57,7 @@ export default class GetSourcePort {
 
         const response = await fetch(apiUrl, { headers });
         if (!response.ok || !response.body) {
-            throw new Error(`Failed to download repository ${owner}/${repo}@${ref}: ${response.status} ${response.statusText}`);
+            throw ErrorHandler.repositoryDownloadFailed(owner, repo, ref, response.status, response.statusText);
         }
 
         const tempFile = path.join(os.tmpdir(), `${Date.now()}-${owner}-${repo}.tar.gz`);

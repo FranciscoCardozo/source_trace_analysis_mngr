@@ -3,6 +3,7 @@ import { BasicAnalysisImpl } from "../adapters/Impl/basicAnalysisImpl";
 import { ComponentAnalysisImpl } from "../adapters/Impl/componentAnalysis";
 import { FunctionalResumeImpl } from "../adapters/Impl/functionalResume";
 import { GetSourceImpl } from "../adapters/Impl/getSourceImpl";
+import ErrorHandler from "./errorHandler";
 
 export default class AnalysisFactory {
     private jobId: string;
@@ -15,7 +16,7 @@ export default class AnalysisFactory {
     init(): Promise<any> {
         const factory = this.defineFactory();
         if (!factory) {
-            return Promise.reject(new Error(`Unknown jobType: ${this.jobType}`));
+            return Promise.reject(ErrorHandler.unknownJobType(this.jobType));
         }
         return factory.execute(this.jobId);
     }

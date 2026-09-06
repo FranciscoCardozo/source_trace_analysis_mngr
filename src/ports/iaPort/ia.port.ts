@@ -1,5 +1,6 @@
 import debug from "debug";
 import config from "../../config";
+import ErrorHandler from "../../domain/errorHandler";
 
 const log: debug.IDebugger = debug("app:iaPort");
 
@@ -30,7 +31,7 @@ export default class IaPort {
 
     static async prompt(promptText: string, options: PromptOptions = {}): Promise<string> {
         if (!config.MODEL_SERVICE_URL) {
-            throw new Error("MODEL_SERVICE_URL is not configured");
+            throw ErrorHandler.modelServiceNotConfigured();
         }
 
         // Uses the OpenAI-compatible chat endpoint (not llama.cpp's raw /completion)
@@ -64,13 +65,13 @@ export default class IaPort {
 
             if (!response.ok) {
                 const errorBody = await response.text().catch(() => "");
-                throw new Error(`Model service responded with ${response.status} ${response.statusText}: ${errorBody}`);
+                throw ErrorHandler.modelServiceError(response.status, response.statusText, errorBody);
             }
 
             const data = await response.json() as ChatCompletionResponse;
             const content = data.choices?.[0]?.message?.content;
             if (typeof content !== "string") {
-                throw new Error(`Unexpected model response shape: ${JSON.stringify(data).slice(0, 300)}`);
+                throw ErrorHandler.unexpectedModelResponse(data);
             }
 
             return content;

@@ -6,6 +6,7 @@ import { pipeline } from "stream/promises";
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import debug from "debug";
 import Utils from "../../domain/utils";
+import ErrorHandler from "../../domain/errorHandler";
 
 const log: debug.IDebugger = debug("app:bucketPort");
 
@@ -31,7 +32,7 @@ export class BucketPort {
             return { bucket: virtualHostedMatch[1], key: decodeURIComponent(virtualHostedMatch[2]) };
         }
 
-        throw new Error(`Unable to parse S3 url: ${url}`);
+        throw ErrorHandler.unableToParseS3Url(url);
     }
 
     static async downloadSource(url: string, destDir: string): Promise<string> {
@@ -40,7 +41,7 @@ export class BucketPort {
 
         const response = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
         if (!response.Body) {
-            throw new Error(`Empty response body for s3://${bucket}/${key}`);
+            throw ErrorHandler.emptyS3ResponseBody(bucket, key);
         }
 
         const tempFile = path.join(os.tmpdir(), `${Date.now()}-${path.basename(key)}`);
