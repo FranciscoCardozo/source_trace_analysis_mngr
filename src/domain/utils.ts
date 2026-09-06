@@ -3,6 +3,7 @@ import path from "path";
 import * as tar from "tar";
 import AdmZip from "adm-zip";
 import { ExtractArchiveOptions } from "./models/interfaces/extractArchiveOptions.interface";
+import ErrorHandler from "./errorHandler";
 
 export default class Utils {
     static async extractArchive(
@@ -27,7 +28,7 @@ export default class Utils {
             return;
         }
 
-        throw new Error(`Unsupported archive format: ${archivePath}`);
+        throw ErrorHandler.unsupportedArchiveFormat(archivePath);
     }
 
     // Zips exported from GitHub (and many other sources) wrap everything in a

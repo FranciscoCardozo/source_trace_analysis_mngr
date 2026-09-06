@@ -8,6 +8,7 @@ import { BucketPort } from "../../ports/bucketPort/bucket.port";
 import IaPort from "../../ports/iaPort/ia.port";
 import JobMetadataRepository from "../../domain/jobMetadataRepository";
 import { MANIFEST_FILES, IGNORED_DIRS, findManifest } from "../../domain/sourceInspector";
+import ErrorHandler from "../../domain/errorHandler";
 import config from "../../config";
 
 const log: debug.IDebugger = debug("app:basicAnalysisImpl");
@@ -134,7 +135,7 @@ export class BasicAnalysisImpl implements BasicAnalysisFactory {
     async validateLanguage(jobId: string): Promise<LanguageValidationResult> {
         const sourceDir = path.join(config.WORKDIR, jobId);
         if (!fs.existsSync(sourceDir)) {
-            throw new Error(`Source directory not found: ${sourceDir}`);
+            throw ErrorHandler.sourceDirectoryNotFound(sourceDir);
         }
 
         const languageCounts = this.countLanguages(sourceDir);
@@ -310,7 +311,7 @@ export class BasicAnalysisImpl implements BasicAnalysisFactory {
     async ValidateContent(jobId: string): Promise<ContentValidationResult> {
         const sourceDir = path.join(config.WORKDIR, jobId);
         if (!fs.existsSync(sourceDir)) {
-            throw new Error(`Source directory not found: ${sourceDir}`);
+            throw ErrorHandler.sourceDirectoryNotFound(sourceDir);
         }
 
         const { fileCount, folderCount } = this.countFilesAndFolders(sourceDir);
@@ -364,7 +365,7 @@ export class BasicAnalysisImpl implements BasicAnalysisFactory {
             return path.basename(key).replace(/\.(zip|tar\.gz|tgz|tar)$/i, "");
         }
 
-        throw new Error(`Unsupported SOURCE_TYPE: ${config.SOURCE_TYPE}`);
+        throw ErrorHandler.unsupportedSourceType(config.SOURCE_TYPE);
     }
 
     private parseValidationResponse(response: string): ValidationResult {

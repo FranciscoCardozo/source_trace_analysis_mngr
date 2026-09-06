@@ -91,6 +91,22 @@ export class ArquitectureAnalysisImpl implements ArquitectureAnalysisFactory {
 
         log(`Architecture signals for job ${jobId}: ${JSON.stringify(detectedSignals)}, manifests in ${manifestLocations.length} location(s), docker-compose=${hasDockerCompose}`);
 
+        // Same "trust an unambiguous heuristic, only ask the model when it's
+        // genuinely ambiguous" pattern used everywhere else in the pipeline
+        // (framework, controllers, services, models, components). A single
+        // folder-naming signal with no competing multi-service evidence is a
+        // reliable, deterministic answer - no need to risk a bad/unparseable
+        // model response for something we already know.
+        if (detectedSignals.length === 1 && manifestLocations.length <= 1) {
+            const [pattern] = detectedSignals;
+            return {
+                valid: true,
+                reason: `Detected via folder naming convention: ${signalPaths.slice(0, 5).join(", ")}`,
+                architecturePattern: pattern,
+                evidencePaths,
+            };
+        }
+
         const promptParts: string[] = [
             "You are determining the architectural style of a software repository.",
             `Choose exactly one label from this set: ${ARCHITECTURE_PATTERN_OPTIONS.join(", ")}.`,
