@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import debug from "debug";
 import { ArquitectureAnalysisFactory, ArchitectureValidationResult } from "../../domain/models/factoryImpl/arquitectureAnalysisFactory";
-import { buildFileTree, MANIFEST_FILES } from "../../domain/sourceInspector";
+import { buildFileTree, fileTreeForPrompt, MANIFEST_FILES } from "../../domain/sourceInspector";
 import JobMetadataRepository from "../../domain/jobMetadataRepository";
 import { JobMetadata, JobEvidence } from "../../domain/models/dynamo/jobMetadata.interface";
 import IaPort from "../../ports/iaPort/ia.port";
@@ -106,14 +106,14 @@ export class ArquitectureAnalysisImpl implements ArquitectureAnalysisFactory {
             `docker-compose file present: ${hasDockerCompose}.`,
             "Project file structure (relative paths, possibly truncated):",
             "```",
-            fileTree.join("\n"),
+            fileTreeForPrompt(fileTree),
             "```",
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "architecturePattern": "one label from the set above"}'
         );
 
         const prompt = promptParts.join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 300, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 150, temperature: 0 });
 
         const result = this.parsePatternResponse(response);
         return { ...result, evidencePaths };

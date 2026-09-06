@@ -119,14 +119,14 @@ export class BasicAnalysisImpl implements BasicAnalysisFactory {
             `Manifest file: ${manifest.file}`,
             "Manifest content:",
             "```",
-            manifest.content.slice(0, 4000),
+            manifest.content.slice(0, 2000),
             "```",
             "Determine if the project name declared in the manifest is consistent with the expected repository name",
             "(allow reasonable differences like case, separators, scoped npm package prefixes, or organization prefixes).",
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation"}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 120, temperature: 0 });
 
         return this.parseValidationResponse(response);
     }
@@ -172,7 +172,7 @@ export class BasicAnalysisImpl implements BasicAnalysisFactory {
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation"}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 120, temperature: 0 });
         const verdict = this.parseValidationResponse(response);
 
         return { ...verdict, detectedLanguage };
@@ -219,14 +219,14 @@ export class BasicAnalysisImpl implements BasicAnalysisFactory {
             `Manifest file: ${manifest.file}`,
             "Manifest content:",
             "```",
-            manifest.content.slice(0, 4000),
+            manifest.content.slice(0, 2000),
             "```",
             "Identify the main application framework in use (e.g. Angular, React, Vue, Express, NestJS, Django, Flask, Spring Boot, etc.).",
             'If no recognizable framework is used, set "framework" to "none".',
             'Respond with ONLY a JSON object, no extra text, in this exact shape: {"valid": true|false, "reason": "short explanation", "framework": "name or none"}',
         ].join("\n");
 
-        const response = await IaPort.prompt(prompt, { maxTokens: 200, temperature: 0 });
+        const response = await IaPort.prompt(prompt, { maxTokens: 150, temperature: 0 });
 
         return this.parseFrameworkResponse(response);
     }
