@@ -1,0 +1,176 @@
+{
+  "Comment": "source-trace-analysis-mngr pipeline: getSource -> basicAnalysis -> functionalResume -> componentAnalysis -> arquitectureAnalysis. Each state runs the same ECS task definition with a different JOB_TYPE override.",
+  "StartAt": "GenerateJobId",
+  "States": {
+    "GenerateJobId": {
+      "Type": "Pass",
+      "Comment": "Input contract for StartExecution: { \"sourceUrl\": \"...\", \"sourceType\": \"git\" | \"s3\" }. jobId is generated here so callers never have to worry about collisions.",
+      "Parameters": {
+        "jobId.$": "States.UUID()",
+        "sourceUrl.$": "$.sourceUrl",
+        "sourceType.$": "$.sourceType"
+      },
+      "Next": "GetSource"
+    },
+
+    "GetSource": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "Cluster": "arn:aws:ecs:us-east-1:713881810585:cluster/source_trace_analysis_mngr",
+        "TaskDefinition": "source_trace_analysis_mngr",
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+            "SecurityGroups": ["sg-00d4aea7aef67195e"],
+            "AssignPublicIp": "DISABLED"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "analysis-mngr",
+              "Environment": [
+                { "Name": "JOB_ID", "Value.$": "$.jobId" },
+                { "Name": "JOB_TYPE", "Value": "getSource" },
+                { "Name": "SOURCE_URL", "Value.$": "$.sourceUrl" },
+                { "Name": "SOURCE_TYPE", "Value.$": "$.sourceType" }
+              ]
+            }
+          ]
+        }
+      },
+      "ResultPath": null,
+      "Next": "BasicAnalysis"
+    },
+
+    "BasicAnalysis": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "Cluster": "arn:aws:ecs:us-east-1:713881810585:cluster/source_trace_analysis_mngr",
+        "TaskDefinition": "source_trace_analysis_mngr",
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+            "SecurityGroups": ["sg-00d4aea7aef67195e"],
+            "AssignPublicIp": "DISABLED"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "analysis-mngr",
+              "Environment": [
+                { "Name": "JOB_ID", "Value.$": "$.jobId" },
+                { "Name": "JOB_TYPE", "Value": "basicAnalysis" },
+                { "Name": "SOURCE_URL", "Value.$": "$.sourceUrl" },
+                { "Name": "SOURCE_TYPE", "Value.$": "$.sourceType" }
+              ]
+            }
+          ]
+        }
+      },
+      "ResultPath": null,
+      "Next": "FunctionalResume"
+    },
+
+    "FunctionalResume": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "Cluster": "arn:aws:ecs:us-east-1:713881810585:cluster/source_trace_analysis_mngr",
+        "TaskDefinition": "source_trace_analysis_mngr",
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+            "SecurityGroups": ["sg-00d4aea7aef67195e"],
+            "AssignPublicIp": "DISABLED"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "analysis-mngr",
+              "Environment": [
+                { "Name": "JOB_ID", "Value.$": "$.jobId" },
+                { "Name": "JOB_TYPE", "Value": "functionalResume" },
+                { "Name": "SOURCE_URL", "Value.$": "$.sourceUrl" },
+                { "Name": "SOURCE_TYPE", "Value.$": "$.sourceType" }
+              ]
+            }
+          ]
+        }
+      },
+      "ResultPath": null,
+      "Next": "ComponentAnalysis"
+    },
+
+    "ComponentAnalysis": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "Cluster": "arn:aws:ecs:us-east-1:713881810585:cluster/source_trace_analysis_mngr",
+        "TaskDefinition": "source_trace_analysis_mngr",
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+            "SecurityGroups": ["sg-00d4aea7aef67195e"],
+            "AssignPublicIp": "DISABLED"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "analysis-mngr",
+              "Environment": [
+                { "Name": "JOB_ID", "Value.$": "$.jobId" },
+                { "Name": "JOB_TYPE", "Value": "componentAnalysis" },
+                { "Name": "SOURCE_URL", "Value.$": "$.sourceUrl" },
+                { "Name": "SOURCE_TYPE", "Value.$": "$.sourceType" }
+              ]
+            }
+          ]
+        }
+      },
+      "ResultPath": null,
+      "Next": "ArquitectureAnalysis"
+    },
+
+    "ArquitectureAnalysis": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "Cluster": "arn:aws:ecs:us-east-1:713881810585:cluster/source_trace_analysis_mngr",
+        "TaskDefinition": "source_trace_analysis_mngr",
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["subnet-0682ef184182bd1ef", "subnet-0c4e624f540cba423"],
+            "SecurityGroups": ["sg-00d4aea7aef67195e"],
+            "AssignPublicIp": "DISABLED"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "analysis-mngr",
+              "Environment": [
+                { "Name": "JOB_ID", "Value.$": "$.jobId" },
+                { "Name": "JOB_TYPE", "Value": "arquitectureAnalysis" },
+                { "Name": "SOURCE_URL", "Value.$": "$.sourceUrl" },
+                { "Name": "SOURCE_TYPE", "Value.$": "$.sourceType" }
+              ]
+            }
+          ]
+        }
+      },
+      "ResultPath": null,
+      "End": true
+    }
+  }
+}
