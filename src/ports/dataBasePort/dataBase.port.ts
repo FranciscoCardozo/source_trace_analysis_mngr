@@ -75,6 +75,11 @@ export default class DataBasePort {
       expressionAttributeNames: Record<string, string>,
       expressionAttributeValues: Record<string, any>
     ) {
+        // DynamoDB rejects an empty ExpressionAttributeNames map outright
+        // (ValidationException), so it must be omitted entirely when there
+        // are no aliased names to send (e.g. an "ADD counter :incr" update).
+        const hasExpressionAttributeNames = Object.keys(expressionAttributeNames).length > 0;
+
         return dynamoDb.send(
           new UpdateCommand({
             TableName: tableName,
@@ -83,7 +88,7 @@ export default class DataBasePort {
               SK: keys.SK
             },
             UpdateExpression: updateExpression,
-            ExpressionAttributeNames: expressionAttributeNames,
+            ...(hasExpressionAttributeNames ? { ExpressionAttributeNames: expressionAttributeNames } : {}),
             ExpressionAttributeValues: expressionAttributeValues,
             ReturnValues: "UPDATED_NEW"
           })
