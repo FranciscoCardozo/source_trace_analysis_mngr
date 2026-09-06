@@ -107,6 +107,19 @@ export class ArquitectureAnalysisImpl implements ArquitectureAnalysisFactory {
             };
         }
 
+        // No specific folder signal (no ports/adapters, usecases/entities,
+        // presentation/business/dal, or views) and no evidence of multiple
+        // independently deployable services: that combination *is* the
+        // definition of a plain Monolith, so answer it directly too.
+        if (detectedSignals.length === 0 && manifestLocations.length <= 1 && !hasDockerCompose) {
+            return {
+                valid: true,
+                reason: "No hexagonal/clean-architecture/n-layer/MVC folder signals and no evidence of multiple independently deployable services.",
+                architecturePattern: "Monolith",
+                evidencePaths,
+            };
+        }
+
         const promptParts: string[] = [
             "You are determining the architectural style of a software repository.",
             `Choose exactly one label from this set: ${ARCHITECTURE_PATTERN_OPTIONS.join(", ")}.`,
