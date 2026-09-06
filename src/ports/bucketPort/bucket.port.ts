@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import debug from "debug";
 import Utils from "../../domain/utils";
 
@@ -54,5 +54,18 @@ export class BucketPort {
 
         log(`Source extracted to ${destDir}`);
         return destDir;
+    }
+
+    static async uploadObject(bucket: string, key: string, body: string | Buffer, contentType: string): Promise<string> {
+        log(`Uploading s3://${bucket}/${key}`);
+
+        await s3Client.send(new PutObjectCommand({
+            Bucket: bucket,
+            Key: key,
+            Body: body,
+            ContentType: contentType,
+        }));
+
+        return key;
     }
 }

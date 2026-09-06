@@ -10,4 +10,5 @@ export default {
     GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
     WORKDIR: process.env.WORKDIR || '/tmp/source-trace',
     MODEL_SERVICE_URL: process.env.MODEL_SERVICE_URL || '',
+    RESULTS_BUCKET: process.env.RESULTS_BUCKET || '',
 }
