@@ -1,6 +1,6 @@
 export default {
     apiPath: process.env.API_PATH || '/AssessmentsMngr',
-    DEBUG: process.env.DEBUG || 'assessments:*',
+    DEBUG: process.env.DEBUG || 'app:*',
     DYNAMODB_TABLE_NAME: process.env.DYNAMODB_TABLE_NAME || 'custom_table',
     JOB_ID: process.env.JOB_ID || 'jobId',
     JOB_TYPE: process.env.JOB_TYPE || 'jobType',
