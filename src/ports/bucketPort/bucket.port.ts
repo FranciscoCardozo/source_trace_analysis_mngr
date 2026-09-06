@@ -48,6 +48,7 @@ export class BucketPort {
 
         try {
             await Utils.extractArchive(tempFile, destDir);
+            await Utils.flattenSingleTopLevelDir(destDir);
         } finally {
             await fs.promises.unlink(tempFile).catch(() => { });
         }
