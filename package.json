@@ -1,6 +1,6 @@
 {
   "name": "source-trace-analysis-mngr",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
